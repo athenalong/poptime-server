@@ -73,7 +73,8 @@ wss.on('connection', (ws) => {
           break;
 
         case 'popcorn_response':
-          console.log(`Response from ${data.fromUserId} to ${data.toUserId}: ${data.response}`);
+          console.log(`Response from ${data.fromUserId} (${data.fromUserName}) to ${data.toUserId}: ${data.response}`);
+          console.log(`Current clients: ${Array.from(clients.keys()).join(', ')}`);
           
           // Send ONLY to the recipient
           const requesterWs = clients.get(data.toUserId);
@@ -86,7 +87,16 @@ wss.on('connection', (ws) => {
             }));
             console.log(`✅ Response sent to ${data.toUserId}`);
           } else {
-            console.log(`❌ Requester ${data.toUserId} not connected`);
+            console.log(`❌ Requester ${data.toUserId} not connected or connection closed`);
+            console.log(`  Client exists: ${clients.has(data.toUserId)}`);
+            if (clients.has(data.toUserId)) {
+              console.log(`  WebSocket state: ${clients.get(data.toUserId).readyState}`);
+            }
+            // Notify sender that recipient is offline
+            ws.send(JSON.stringify({
+              type: 'confirmation',
+              message: 'Recipient is not connected'
+            }));
           }
           break;
 
