@@ -100,6 +100,28 @@ wss.on('connection', (ws) => {
           }
           break;
 
+        case 'final_message':
+          console.log(`Final message from ${data.fromUserId} (${data.fromUserName}) to ${data.toUserId}: ${data.messageType}`);
+          
+          // Send ONLY to the recipient
+          const finalRecipientWs = clients.get(data.toUserId);
+          if (finalRecipientWs && finalRecipientWs.readyState === WebSocket.OPEN) {
+            finalRecipientWs.send(JSON.stringify({
+              type: 'final_message',
+              fromUserId: data.fromUserId,
+              fromUserName: data.fromUserName,
+              messageType: data.messageType
+            }));
+            console.log(`✅ Final message sent to ${data.toUserId}`);
+          } else {
+            console.log(`❌ Recipient ${data.toUserId} not connected`);
+            ws.send(JSON.stringify({
+              type: 'confirmation',
+              message: 'Recipient is not connected'
+            }));
+          }
+          break;
+
         default:
           console.log('Unknown message type:', data.type);
       }
